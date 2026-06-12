@@ -19,7 +19,35 @@ a{word-break:break-all}
 <h1>Tageschau für den Wochenrückblick</h1>
 <div id="weeks"></div>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDJhdC0Y0Z305wtfKn6yhPL1fj80e7IzbE",
+  authDomain: "wochenrueckblick-tagesschau.firebaseapp.com",
+  projectId: "wochenrueckblick-tagesschau",
+  storageBucket: "wochenrueckblick-tagesschau.firebasestorage.app",
+  messagingSenderId: "56929188617",
+  appId: "1:56929188617:web:58100b17446b958cb931d8",
+  measurementId: "G-EMF6CYD1DJ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+</script>
+
 <script>
+
+    const ADMIN_PASSWORD = "hjbxbgs!dkjvfo.";
+    const isAdmin =
+    prompt("Admin-Passwort (leer lassen für Besucher)") === ADMIN_PASSWORD;
+
 const API_KEY = "AIzaSyCHBW_Mk20mrV4xX3SS4u6QEQk54VxVNWA";
 const PLAYLIST_ID = "PL4A2F331EE86DCC22";
 
@@ -48,7 +76,11 @@ function addVideoToWeek(video){
         details=document.createElement("details");
         details.id=week.key;
         details.innerHTML=`
-            <summary>${week.title}</summary>
+            <summary>
+            ${week.title}
+            ${isAdmin ? `<button onclick="pinWeek('${week.key}', event)">⭐</button>` : ""}
+            </summary>
+}
             <div class="week-content"></div>
         `;
 
@@ -76,6 +108,17 @@ content.insertAdjacentHTML(
 `
 );
 
+}
+
+function pinWeek(weekKey, event){
+    event.stopPropagation();
+
+    const week = document.getElementById(weekKey);
+    const container = document.getElementById("weeks");
+
+    container.insertBefore(week, container.firstChild);
+
+    alert("⭐ Für diese Woche wird ein Test geschrieben.");
 }
 
 async function loadVideos(){
