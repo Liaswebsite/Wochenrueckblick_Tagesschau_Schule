@@ -20,12 +20,12 @@ a{word-break:break-all}
 <div id="weeks"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 import {
   getFirestore,
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -38,18 +38,33 @@ const firebaseConfig = {
   measurementId: "G-EMF6CYD1DJ"
 };
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+window.db = db;
+window.deleteDoc = deleteDoc;
+window.doc = doc;
+window.getDoc = getDoc;
+window.setDoc = setDoc;
 </script>
 
 <script>
 
     const ADMIN_PASSWORD = "hjbxbgs!dkjvfo.";
-    const isAdmin =
-    prompt("Admin-Passwort (leer lassen für Besucher)") === ADMIN_PASSWORD;
+
+let isAdmin = false;
+
+const enteredPassword = prompt("Admin-Passwort (leer lassen für Besucher)");
+
+if (enteredPassword === ADMIN_PASSWORD) {
+    isAdmin = true;
+    alert("Richtig ✅ Jetzt bist du Admin");
+} else if (enteredPassword !== null && enteredPassword !== "") {
+    alert("Der Code ist falsch ❌ Du bist kein Admin");
+}
 
 const API_KEY = "AIzaSyCHBW_Mk20mrV4xX3SS4u6QEQk54VxVNWA";
-const PLAYLIST_ID = "PL4A2F331EE86DCC22";
+const PLAYLIST_ID = "PLQBHJI2P18MQ";
 
 function getWeekRange(date){
     const d=new Date(date);
@@ -75,14 +90,28 @@ function addVideoToWeek(video){
     if(!details){
         details=document.createElement("details");
         details.id=week.key;
-        details.innerHTML=`
-            <summary>
-            ${week.title}
-            ${isAdmin ? `<button onclick="pinWeek('${week.key}', event)">⭐</button>` : ""}
-            </summary>
-}
-            <div class="week-content"></div>
-        `;
+        details.innerHTML = `
+<summary style="display:flex;justify-content:space-between;align-items:center;">
+    <span>${week.title}</span>
+
+    ${
+        isAdmin
+        ? `
+        <span>
+            <button onclick="pinWeek('${week.key}', event)">⭐</button>
+            <button onclick="deleteWeek('${week.key}', event)"
+                    style="color:red;">
+                🗑️
+            </button>
+        </span>
+        `
+        : ""
+    }
+
+</summary>
+
+<div class="week-content"></div>
+`;
 
         const container=document.getElementById("weeks");
         container.insertBefore(details, container.firstChild);
@@ -121,6 +150,25 @@ function pinWeek(weekKey, event){
     alert("⭐ Für diese Woche wird ein Test geschrieben.");
 }
 
+async function deleteWeek(weekKey, event){
+
+    event.stopPropagation();
+
+    if(!confirm("Diese Woche wirklich löschen?")){
+        return;
+    }
+
+    await setDoc(
+        doc(window.db,"deletedWeeks",weekKey),
+        {
+            deleted:true
+        }
+    );
+
+    document.getElementById(weekKey).remove();
+
+}
+
 async function loadVideos(){
     const url=`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${PLAYLIST_ID}&key=${API_KEY}`;
 
@@ -148,9 +196,21 @@ videos.sort((a, b) =>
     new Date(a.date) - new Date(b.date)
 );
 
-videos.forEach(video => {
+for(const video of videos){
+
+    const week=getWeekRange(video.date);
+
+    const snap=await getDoc(
+        doc(window.db,"deletedWeeks",week.key)
+    );
+
+    if(snap.exists()){
+        continue;
+    }
+
     addVideoToWeek(video);
-});
+
+}
 }
 
 loadVideos();
