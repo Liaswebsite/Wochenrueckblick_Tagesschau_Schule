@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+ <link rel="stylesheet" href="Wochenrückblick.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tageschau für den Wochenrückblick</title>
@@ -105,7 +106,12 @@ function addVideoToWeek(video){
         isAdmin
         ? `
         <span>
-            <button onclick="pinWeek('${week.key}', event)">⭐</button>
+            <button
+                id="star-${week.key}"
+                class="admin-btn"
+                onclick="togglePinWeek('${week.key}', event)">
+                ⭐
+            </button>
             <button onclick="deleteWeek('${week.key}', event)"
                     style="color:red;">
                 🗑️
@@ -146,28 +152,50 @@ content.insertAdjacentHTML(
 
 }
 
-async function pinWeek(weekKey, event){
+async function togglePinWeek(weekKey,event){
 
     event.stopPropagation();
 
-    const week = document.getElementById(weekKey);
+    const ref = doc(window.db,"testWeeks",weekKey);
+    const snap = await getDoc(ref);
 
-    if(!week){
+    const button=document.getElementById("star-"+weekKey);
+
+    if(snap.exists()){
+
+        await deleteDoc(ref);
+
+        button.classList.remove("pinned");
+
+        const clone=document.getElementById("test-"+weekKey);
+
+        if(clone){
+            clone.remove();
+        }
+
+        if(document.getElementById("testWeeks").children.length===0){
+            document.getElementById("testTitle").style.display="none";
+        }
+
         return;
     }
 
-    await setDoc(
-        doc(window.db,"testWeeks",weekKey),
-        {
-            active:true
-        }
-    );
+    await setDoc(ref,{
+        active:true
+    });
+
+    button.classList.add("pinned");
 
     document.getElementById("testTitle").style.display="block";
 
-    document.getElementById("testWeeks").appendChild(week);
+    const original=document.getElementById(weekKey);
 
-    alert("⭐ Die Woche wurde als Testwoche markiert.");
+    const clone=original.cloneNode(true);
+
+    clone.id="test-"+weekKey;
+
+    document.getElementById("testWeeks").appendChild(clone);
+
 }
 
 async function deleteWeek(weekKey, event){
