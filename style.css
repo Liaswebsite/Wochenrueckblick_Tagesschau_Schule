@@ -1,0 +1,26 @@
+.admin-btn{
+    position:relative;
+    border:none;
+    background:transparent;
+    font-size:20px;
+    cursor:pointer;
+    padding:5px;
+    transition:background .2s;
+    border-radius:5px;
+}
+
+.admin-btn:hover{
+    background:#ff4d4d;
+}
+
+.admin-btn.pinned::after{
+    content:"";
+    position:absolute;
+    left:2px;
+    bottom:2px;
+    width:26px;
+    height:3px;
+    background:red;
+    transform:rotate(-45deg);
+    transform-origin:center;
+}
