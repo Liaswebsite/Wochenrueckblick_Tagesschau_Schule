@@ -18,6 +18,13 @@ a{word-break:break-all}
 
 <h1>Tageschau für den Wochenrückblick</h1>
 <div id="weeks"></div>
+<h2 id="testTitle" style="display:none;">
+⭐ In dieser Woche wird ein Test geschrieben
+</h2>
+
+<div id="testWeeks"></div>
+
+<hr>
 
 <script type="module">
 import {
@@ -139,15 +146,28 @@ content.insertAdjacentHTML(
 
 }
 
-function pinWeek(weekKey, event){
+async function pinWeek(weekKey, event){
+
     event.stopPropagation();
 
     const week = document.getElementById(weekKey);
-    const container = document.getElementById("weeks");
 
-    container.insertBefore(week, container.firstChild);
+    if(!week){
+        return;
+    }
 
-    alert("⭐ Für diese Woche wird ein Test geschrieben.");
+    await setDoc(
+        doc(window.db,"testWeeks",weekKey),
+        {
+            active:true
+        }
+    );
+
+    document.getElementById("testTitle").style.display="block";
+
+    document.getElementById("testWeeks").appendChild(week);
+
+    alert("⭐ Die Woche wurde als Testwoche markiert.");
 }
 
 async function deleteWeek(weekKey, event){
